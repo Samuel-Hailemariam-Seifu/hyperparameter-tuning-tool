@@ -1,0 +1,45 @@
+Metadata-Version: 2.4
+Name: hyperparameter-tuning-tool
+Version: 0.1.0
+Summary: CLI for grid, random, and Optuna hyperparameter search on tabular data
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24
+Requires-Dist: pandas>=2.0
+Requires-Dist: scikit-learn>=1.3
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: rich>=13.0
+Requires-Dist: optuna>=3.5
+Requires-Dist: optuna-integration[sklearn]>=4.0
+
+# Hyperparameter tuning tool
+
+Small CLI to run **grid search**, **randomized search**, or **Optuna** on tabular CSV data (or built-in sklearn toy datasets).
+
+## Install
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+```bash
+# Built-in breast cancer dataset, random forest, 5-fold CV, randomized search
+hpt-tune --dataset breast_cancer --model random_forest --method random --n-iter 24
+
+# Your CSV (last column or use --target)
+hpt-tune --data ./train.csv --target label --model gradient_boosting --method optuna --n-trials 40
+```
+
+Options:
+
+- `--method`: `grid` | `random` | `optuna`
+- `--model`: `random_forest` | `gradient_boosting` | `logistic_regression` | `svc_rbf`
+- `--dataset`: `iris` | `wine` | `breast_cancer` (used when `--data` is omitted)
+- `--metric`: `accuracy` | `f1_macro` | `roc_auc` (binary/multiclass where applicable)
+- `--output`: write JSON summary path
+
+## License
+
+MIT

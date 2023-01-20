@@ -1,0 +1,2 @@
+[console_scripts]
+hpt-tune = tuner.cli:main

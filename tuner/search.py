@@ -4,35 +4,19 @@ import json
 from typing import Any
 
 import numpy as np
-from sklearn.metrics import get_scorer, make_scorer
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, StratifiedKFold
 from sklearn.utils.multiclass import type_of_target
-
-from optuna.integration import OptunaSearchCV
 
 from tuner.models import ModelSpec, get_model
 
 
-def _scorer_for_metric(metric: str):
+def _scorer_for_metric(metric: str, y) -> object:
     if metric == "roc_auc":
-        def roc_multiclass(y_true, y_pred_proba):
-            tt = type_of_target(y_true)
-            if tt == "binary":
-                if y_pred_proba.ndim == 2 and y_pred_proba.shape[1] == 2:
-                    proba = y_pred_proba[:, 1]
-                else:
-                    proba = y_pred_proba
-                return roc_auc_score(y_true, proba)
-            return roc_auc_score(
-                y_true,
-                y_pred_proba,
-                multi_class="ovr",
-                average="weighted",
-            )
-
-        return make_scorer(roc_multiclass, needs_proba=True)
-
+        tt = type_of_target(y)
+        if tt == "binary":
+            return get_scorer("roc_auc")
+        return get_scorer("roc_auc_ovr_weighted")
     return get_scorer(metric)
 
 
@@ -51,7 +35,7 @@ def run_grid(
     n_jobs: int,
 ) -> dict[str, Any]:
     est = spec.build()
-    scorer = _scorer_for_metric(metric)
+    scorer = _scorer_for_metric(metric, y)
     search = GridSearchCV(
         est,
         spec.param_grid,
@@ -79,7 +63,7 @@ def run_random(
     n_jobs: int,
 ) -> dict[str, Any]:
     est = spec.build()
-    scorer = _scorer_for_metric(metric)
+    scorer = _scorer_for_metric(metric, y)
     search = RandomizedSearchCV(
         est,
         spec.param_distributions_random,
@@ -108,8 +92,15 @@ def run_optuna(
     n_trials: int,
     n_jobs: int,
 ) -> dict[str, Any]:
+    try:
+        from optuna.integration import OptunaSearchCV
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            "Optuna sklearn integration is required for --method optuna. "
+            "Install with: pip install 'optuna-integration[sklearn]'"
+        ) from e
     est = spec.build()
-    scorer = _scorer_for_metric(metric)
+    scorer = _scorer_for_metric(metric, y)
     search = OptunaSearchCV(
         est,
         spec.param_distributions_optuna,
