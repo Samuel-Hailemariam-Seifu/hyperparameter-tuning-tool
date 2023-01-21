@@ -25,7 +25,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--data",
         type=str,
         default=None,
-        help="Path to CSV (classification target column; default: last column).",
+        metavar="PATH",
+        help="Path to an existing CSV file (target column: --target or last column).",
     )
     src.add_argument(
         "--dataset",
@@ -125,13 +126,17 @@ def _public_dict(result: dict) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    X_train, X_hold, y_train, y_hold = load_data(
-        csv_path=args.data,
-        dataset=args.dataset,
-        target=args.target,
-        test_size=args.test_size,
-        random_state=args.random_state,
-    )
+    try:
+        X_train, X_hold, y_train, y_hold = load_data(
+            csv_path=args.data,
+            dataset=args.dataset,
+            target=args.target,
+            test_size=args.test_size,
+            random_state=args.random_state,
+        )
+    except FileNotFoundError as e:
+        console.print(f"[red]{e}[/red]")
+        return 2
 
     result = run(
         args.model,

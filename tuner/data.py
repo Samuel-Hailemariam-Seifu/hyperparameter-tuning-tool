@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 from sklearn.datasets import load_breast_cancer, load_iris, load_wine
 from sklearn.model_selection import train_test_split
@@ -29,7 +31,15 @@ def load_builtin(name: str) -> tuple[pd.DataFrame, pd.Series]:
 
 
 def load_csv(path: str, target: str | None) -> tuple[pd.DataFrame, pd.Series]:
-    df = pd.read_csv(path)
+    p = Path(path).expanduser()
+    if not p.is_file():
+        cwd = Path.cwd()
+        raise FileNotFoundError(
+            f"CSV not found: {p.resolve()!s}; cwd={cwd!s}; "
+            "use a real file path for --data, or omit --data and set "
+            "--dataset to iris, wine, or breast_cancer."
+        )
+    df = pd.read_csv(p)
     if target is None:
         target = str(df.columns[-1])
     if target not in df.columns:
