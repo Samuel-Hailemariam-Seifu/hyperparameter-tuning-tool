@@ -1,2 +1,3 @@
 [console_scripts]
 hpt-tune = tuner.cli:main
+hpt-ui = tuner.ui_launcher:main

@@ -10,5 +10,8 @@ tuner/__init__.py
 tuner/__main__.py
 tuner/cli.py
 tuner/data.py
+tuner/evaluate.py
 tuner/models.py
 tuner/search.py
+tuner/ui_app.py
+tuner/ui_launcher.py

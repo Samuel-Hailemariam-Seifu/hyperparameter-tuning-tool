@@ -8,7 +8,16 @@ Small CLI to run **grid search**, **randomized search**, or **Optuna** on tabula
 pip install -e .
 ```
 
-## Usage
+## Web UI (for a quick, plain-language tour)
+
+```bash
+pip install -e .
+hpt-ui
+```
+
+Opens a browser page that explains what tuning does and lets you pick a demo dataset or upload a CSV.
+
+## CLI usage
 
 ```bash
 # Built-in breast cancer dataset, random forest, 5-fold CV, randomized search

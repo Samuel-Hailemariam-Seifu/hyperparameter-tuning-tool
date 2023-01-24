@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -30,16 +31,7 @@ def load_builtin(name: str) -> tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 
-def load_csv(path: str, target: str | None) -> tuple[pd.DataFrame, pd.Series]:
-    p = Path(path).expanduser()
-    if not p.is_file():
-        cwd = Path.cwd()
-        raise FileNotFoundError(
-            f"CSV not found: {p.resolve()!s}; cwd={cwd!s}; "
-            "use a real file path for --data, or omit --data and set "
-            "--dataset to iris, wine, or breast_cancer."
-        )
-    df = pd.read_csv(p)
+def load_csv_dataframe(df: pd.DataFrame, target: str | None) -> tuple[pd.DataFrame, pd.Series]:
     if target is None:
         target = str(df.columns[-1])
     if target not in df.columns:
@@ -51,15 +43,36 @@ def load_csv(path: str, target: str | None) -> tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 
+def load_csv(path: str, target: str | None) -> tuple[pd.DataFrame, pd.Series]:
+    p = Path(path).expanduser()
+    if not p.is_file():
+        cwd = Path.cwd()
+        raise FileNotFoundError(
+            f"CSV not found: {p.resolve()!s}; cwd={cwd!s}; "
+            "use a real file path for --data, or omit --data and set "
+            "--dataset to iris, wine, or breast_cancer."
+        )
+    df = pd.read_csv(p)
+    return load_csv_dataframe(df, target)
+
+
+def load_csv_bytes(raw: bytes, target: str | None) -> tuple[pd.DataFrame, pd.Series]:
+    df = pd.read_csv(io.BytesIO(raw))
+    return load_csv_dataframe(df, target)
+
+
 def load_data(
     *,
-    csv_path: str | None,
-    dataset: str,
-    target: str | None,
-    test_size: float,
-    random_state: int,
+    csv_path: str | None = None,
+    csv_bytes: bytes | None = None,
+    dataset: str = "breast_cancer",
+    target: str | None = None,
+    test_size: float = 0.0,
+    random_state: int = 42,
 ) -> tuple:
-    if csv_path:
+    if csv_bytes is not None:
+        X, y = load_csv_bytes(csv_bytes, target)
+    elif csv_path:
         X, y = load_csv(csv_path, target)
     else:
         X, y = load_builtin(dataset)

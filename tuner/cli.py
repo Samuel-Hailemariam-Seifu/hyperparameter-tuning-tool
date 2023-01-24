@@ -5,10 +5,8 @@ import json
 
 from rich.console import Console
 from rich.table import Table
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
-from sklearn.utils.multiclass import type_of_target
-
 from tuner.data import load_data
+from tuner.evaluate import holdout_score, public_result
 from tuner.models import MODELS
 from tuner.search import dump_json, run
 
@@ -102,28 +100,6 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def _holdout_score(est, X, y, metric: str) -> float:
-    tt = type_of_target(y)
-    if metric == "accuracy":
-        return float(accuracy_score(y, est.predict(X)))
-    if metric == "f1_macro":
-        return float(f1_score(y, est.predict(X), average="macro"))
-    if metric == "roc_auc":
-        if tt == "binary":
-            proba = est.predict_proba(X)
-            col = proba[:, 1] if proba.shape[1] == 2 else proba.ravel()
-            return float(roc_auc_score(y, col))
-        proba = est.predict_proba(X)
-        return float(
-            roc_auc_score(y, proba, multi_class="ovr", average="weighted"),
-        )
-    raise ValueError(metric)
-
-
-def _public_dict(result: dict) -> dict:
-    return {k: v for k, v in result.items() if not str(k).startswith("_")}
-
-
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
@@ -154,13 +130,13 @@ def main(argv: list[str] | None = None) -> int:
     if X_hold is not None and y_hold is not None:
         est = result.get("_best_estimator")
         if est is not None:
-            result["holdout_score"] = _holdout_score(est, X_hold, y_hold, args.metric)
+            result["holdout_score"] = holdout_score(est, X_hold, y_hold, args.metric)
 
     if args.output:
-        dump_json(args.output, _public_dict(result))
+        dump_json(args.output, public_result(result))
 
     if args.json:
-        print(json.dumps(_public_dict(result), indent=2))
+        print(json.dumps(public_result(result), indent=2))
         return 0
 
     table = Table(title="Hyperparameter search", show_header=True, header_style="bold")

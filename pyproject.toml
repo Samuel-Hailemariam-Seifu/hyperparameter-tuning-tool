@@ -15,10 +15,12 @@ dependencies = [
     "rich>=13.0",
     "optuna>=3.5",
     "optuna-integration[sklearn]>=4.0",
+    "streamlit>=1.28",
 ]
 
 [project.scripts]
 hpt-tune = "tuner.cli:main"
+hpt-ui = "tuner.ui_launcher:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
